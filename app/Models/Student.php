@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Attendance;
+use App\Models\Course;
 
 class Student extends Authenticatable
 {
@@ -18,7 +20,8 @@ class Student extends Authenticatable
         'name',
         'admission_number',
         'course',
-        'password'
+        'password',
+        'role'
     ];
 
     /**
@@ -29,6 +32,15 @@ class Student extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token'
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $attributes = [
+        'role' => 'student'
     ];
 
     /**
@@ -59,5 +71,33 @@ class Student extends Authenticatable
     public function getAuthPassword()
     {
         return $this->password;
+    }
+
+    public function course()
+    {
+        return $this->belongsTo(Course::class);
+    }
+
+    /**
+     * Relationship with attendance records
+     */
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class, 'student_id');
+    }
+
+    /**
+     * Calculate attendance percentage
+     */
+    public function attendancePercentage()
+    {
+        $totalClasses = $this->attendances()->count();
+        $presentClasses = $this->attendances()->where('status', 'present')->count();
+
+        if ($totalClasses == 0) {
+            return 0;
+        }
+
+        return round(($presentClasses / $totalClasses) * 100, 2);
     }
 }

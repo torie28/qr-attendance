@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\auth\LoginController;
 use App\Http\Controllers\auth\RegisterController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\StudentDashboardController;
 use Illuminate\Support\Facades\Auth;
 
 // login routes
@@ -17,13 +18,9 @@ Route::post('/register', [RegisterController::class, 'register']);
 
 // Role-based dashboard routes
 Route::middleware(['auth'])->group(function () {
-    // Student Dashboard
-    Route::get('/studentdashboard', function () {
-        $user = Auth::user();
-        $attendancePercentage = $user->attendancePercentage();
-        $attendances = $user->attendances;
-        return view('studentdashboard', compact('user', 'attendancePercentage', 'attendances'));
-    })->name('studentdashboard');
+    // Student Dashboard with explicit controller
+    Route::get('/studentdashboard', [StudentDashboardController::class, 'index'])
+        ->name('studentdashboard');
 
     // Admin Dashboard
     Route::get('/admindashboard', function () {
@@ -38,8 +35,11 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('/qr-test', function () {
+    $courseName = request('course_name', 'Test Course');
+    $courseCode = request('course_code', 'TST001');
+    
     $writer = new \Endroid\QrCode\Writer\PngWriter();
-    $qrCode = new \Endroid\QrCode\QrCode('Test QR Code');
+    $qrCode = new \Endroid\QrCode\QrCode("Course: {$courseCode} - {$courseName}");
     
     $result = $writer->write($qrCode);
     
@@ -48,8 +48,10 @@ Route::get('/qr-test', function () {
 })->name('qr.test');
 
 Route::get('/qr-view', function () {
-    return view('qr-code');
-})->name('qr.view');
+    $courseName = 'Default Course';
+    $courseCode = 'DEF001';
+    return view('qr-code', compact('courseName', 'courseCode'));
+})->name('qr-code');
 
 Route::get('/', function () {
     return view('home');

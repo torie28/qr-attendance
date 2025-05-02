@@ -4,15 +4,14 @@ namespace App\Models;
 
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Attendance;
 
 class User extends Authenticatable
 {
     use Notifiable;
 
     protected $fillable = [
-        'name',
-        'admission_number',
-        'course',
+        'email',
         'password',
         'role'
     ];
@@ -22,29 +21,6 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    public function course()
-    {
-        return $this->belongsTo(Course::class);
-    }
-
-    public function attendances()
-    {
-        return $this->hasMany(Attendance::class);
-    }
-
-    public function attendancePercentage($courseId = null)
-    {
-        $query = $this->attendances();
-        
-        if ($courseId) {
-            $query->where('course_id', $courseId);
-        }
-
-        $totalClasses = Attendance::count();
-        $attendedClasses = $query->count();
-
-        return $totalClasses > 0 ? ($attendedClasses / $totalClasses) * 100 : 0;
-    }
 
     public function isAdmin()
     {
@@ -54,5 +30,18 @@ class User extends Authenticatable
     public function isStudent()
     {
         return $this->role === 'student';
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function attendancePercentage()
+    {
+        $totalClasses = $this->attendances()->distinct('course_id')->count('course_id');
+        $attendedClasses = $this->attendances()->count();
+
+        return $totalClasses > 0 ? round(($attendedClasses / $totalClasses) * 100, 2) : 0;
     }
 }

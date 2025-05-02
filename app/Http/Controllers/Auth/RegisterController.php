@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Course;
+use App\Models\Student;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -30,7 +31,7 @@ class RegisterController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/login';
+    protected $redirectTo = '/';
 
     /**
      * Create a new controller instance.
@@ -61,30 +62,45 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
-        return Validator::make($data, [
-            'name' => ['required', 'string', 'max:255'],
-            'admission_number' => ['required', 'string', 'unique:users', 'max:50'],
-            'course' => ['required', 'string', 'max:255'],
-            'password' => ['required', 'string', 'min:4', 'confirmed'],
-            'role' => ['sometimes', 'in:student,admin']
-        ]);
+        if ($data['role'] === 'student') {
+            return Validator::make($data, [
+                'name' => ['required', 'string', 'max:255'],
+                'admission_number' => ['required', 'string', 'unique:students'],
+                'course' => ['required', 'string'],
+                'password' => ['required', 'string', 'min:4', 'confirmed'],
+            ]);
+        } else {
+            return Validator::make($data, [
+                'name' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
+                'password' => ['required', 'string', 'min:4', 'confirmed'],
+            ]);
+        }
     }
 
     /**
      * Create a new user instance after a valid registration.
      *
      * @param  array  $data
-     * @return \App\Models\User
+     * @return \Illuminate\Contracts\Auth\Authenticatable
      */
     protected function create(array $data)
     {
-        return User::create([
-            'name' => $data['name'],
-            'admission_number' => $data['admission_number'],
-            'course' => $data['course'] ?? 'Unknown',
-            'password' => Hash::make($data['password']),
-            'role' => $data['role'] ?? 'student'
-        ]);
+        if ($data['role'] === 'student') {
+            return Student::create([
+                'name' => $data['name'],
+                'admission_number' => $data['admission_number'],
+                'course' => $data['course'],
+                'password' => Hash::make($data['password']),
+            ]);
+        } else {
+            return User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'role' => 'admin',
+                'password' => Hash::make($data['password']),
+            ]);
+        }
     }
 
     /**

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('admission_number')->unique();
             $table->string('course');
+            $table->string('role')->default('student');
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
@@ -28,5 +29,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('students');
+        $table->dropColumn('role');
     }
 };
